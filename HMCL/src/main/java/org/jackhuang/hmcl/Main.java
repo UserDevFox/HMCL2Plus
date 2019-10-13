@@ -25,15 +25,15 @@ import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.*;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.RepaintManager;
@@ -57,6 +57,8 @@ import org.jackhuang.hmcl.util.log.layout.DefaultLayout;
 import org.jackhuang.hmcl.util.ui.MyRepaintManager;
 import org.jackhuang.hmcl.util.upgrade.IUpgrader;
 import org.jackhuang.hmcl.laf.BeautyEyeLNFHelper;
+
+import static org.jackhuang.hmcl.util.C.i18n;
 
 /**
  *
@@ -162,7 +164,7 @@ public final class Main {
                 }
             PluginManager.loadPlugins();
 
-            IUpgrader.NOW_UPGRADER.parseArguments(HMCLApi.HMCL_VERSION, Arrays.asList(args));
+            //IUpgrader.NOW_UPGRADER.parseArguments(HMCLApi.HMCL_VERSION, Arrays.asList(args));
 
             System.setProperty("awt.useSystemAAFontSettings", "on");
             System.setProperty("swing.aatext", "true");
@@ -231,9 +233,27 @@ public final class Main {
                         }
                     });
             }
-            
+
+            thread(Main::checkDSTRootCAX3, "CA Certificate Check", true);
             MainFrame.showMainFrame();
         }
+    }
+
+    /**
+     * Start a thread invoking {@code runnable} immediately.
+     * @param runnable code to run
+     * @param name the name of thread
+     * @param isDaemon true if thread will be terminated when only daemon threads are running.
+     * @return the reference of the started thread
+     */
+    public static Thread thread(Runnable runnable, String name, boolean isDaemon) {
+        Thread thread = new Thread(runnable);
+        if (isDaemon)
+            thread.setDaemon(true);
+        if (name != null)
+            thread.setName(name);
+        thread.start();
+        return thread;
     }
 
     public static void invokeUpdate() {
@@ -248,4 +268,28 @@ public final class Main {
             return null;
         }
     }
+
+
+    private static void checkDSTRootCAX3() {
+        TrustManagerFactory tmf;
+        try {
+            tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init((KeyStore) null);
+        } catch (NoSuchAlgorithmException | KeyStoreException e) {
+            HMCLog.warn("Failed to init TrustManagerFactory", e);
+            // don't know what to do here
+            return;
+        }
+        for (TrustManager tm : tmf.getTrustManagers()) {
+            if (tm instanceof X509TrustManager) {
+                for (X509Certificate cert : ((X509TrustManager) tm).getAcceptedIssuers()) {
+                    if ("CN=DST Root CA X3, O=Digital Signature Trust Co.".equals((cert.getSubjectDN().getName()))) {
+                        return;
+                    }
+                }
+            }
+        }
+        MessageBox.showLocalized("fatal.missing_dst_root_ca_x3");
+    }
+
 }

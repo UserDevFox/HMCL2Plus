@@ -438,3 +438,5 @@ wizard.steps=步驟
 
 lang=繁體中文
 lang.default=跟隨系統語言
+
+fatal.missing_dst_root_ca_x3=目前的 Java 平台缺少 DST Root CA X3 憑證。\n您依然可以使用 Hello Minecraft! Launcher，但將無法連線到部分網站（如使用 Lets Encrypt 證書的站點），這可能會使 Hello Minecraft! Launcher 無法正常運作。\n請將您的 Java 升級到 8u101 以上以解決此問題。

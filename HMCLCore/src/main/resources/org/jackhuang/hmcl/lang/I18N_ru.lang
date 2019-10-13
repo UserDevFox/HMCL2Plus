@@ -438,3 +438,5 @@ wizard.steps=Steps
 
 lang=Русский
 lang.default=Выбран язык операционной системы.
+
+fatal.missing_dst_root_ca_x3=The DST Root CA X3 certificate is missing on the current Java platform.\nYou can still use Hello Minecraft! Launcher, but Hello Minecraft! Launcher will be unable to connect to some sites (such as sites that use certificates issued by Let's Encrypt), which may cause Hello Minecraft! Launcher not to function properly.\nPlease upgrade your Java to 8u101 or later to resolve the problem.
